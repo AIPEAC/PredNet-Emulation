@@ -43,3 +43,5 @@ Particularly, if the question involves how code works, the answer should be deta
   - 一个函数，无论是类内还是类外
   - 一个复杂的逻辑块，比如if-else或try-catch
   
+Do not give examples unless specifically asked for.
+除非特别要求，否则不要给出示例。

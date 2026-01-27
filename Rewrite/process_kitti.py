@@ -9,7 +9,7 @@
 """I: imports"""
 # this is a local file
 from unicodedata import category
-from kitti_settings import *
+from Rewrite.kitti_settings import *
 
 # regular imports
 import os
@@ -20,7 +20,7 @@ import requests
 import urllib.request
 
 # decode HTML
-from bs4 import BeautifulSoup, soup
+from bs4 import BeautifulSoup
 
 # read image from file, adjust image size
 from imageio import imread
@@ -95,11 +95,11 @@ def extract_data():
             print('Extracting '+file)
             
             # get the first 10 characters; f[:-4] remove '.zip'
-            spec_folder = file[:10] + '/' + file[:-4] + '/image03/data/'
+            spec_folder = file[:10] + '/' + file[:-4] + '/image_03/data/'
             """
             	e.g.:
             		file = '2011_09_26_drive_0005_sync.zip'
-					spec_folder = '2011_09_26/2011_09_26_drive_0005_sync/image03/data/'
+					spec_folder = '2011_09_26/2011_09_26_drive_0005_sync/image_03/data/'
             """
             
             # use cmd line to unzip
@@ -140,6 +140,7 @@ def process_data():
 				Finally, image_dir is the directory path for the image data of the current recording.
 			"""
 			image_dir = os.path.join(DATA_DIR, 'raw/', category, folder, folder[:10], folder, 'image_03/data/')
+
 			image_files = list(os.walk(image_dir, topdown=False))[-1][-1]
    
 			# add all image files to list

@@ -8,10 +8,14 @@ from bs4 import BeautifulSoup
 import urllib.request
 import numpy as np
 from imageio import imread
-from scipy.misc import imresize
+#from scipy.misc import imresize
 import hickle as hkl
-from Rewrite.kitti_settings import *
-
+from kitti_settings import *
+from PIL import Image
+def imresize(arr, size):
+    img = Image.fromarray(arr)
+    img_resized = img.resize(size, Image.ANTIALIAS)
+    return np.array(img_resized)
 
 desired_im_sz = (128, 160)
 categories = ['city', 'residential', 'road']

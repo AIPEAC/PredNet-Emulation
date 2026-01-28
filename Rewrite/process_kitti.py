@@ -9,7 +9,7 @@
 """I: imports"""
 # this is a local file
 from unicodedata import category
-from Rewrite.kitti_settings import *
+from kitti_settings import *
 
 # regular imports
 import os
@@ -45,13 +45,15 @@ categories = ['city','residential','road']
 """II.2: validation sets and test sets"""
 validation_name1=["2011_09_26_drive_0005_sync"]
 val_recordings=[('city',validation_name1[0])]
-
+"""
 test_names1=['2011_09_26_drive_0104_sync',
              '2011_09_26_drive_0079_sync',
              '2011_09_26_drive_0070_sync']
-test_recordings=[('residential',test_names1[0]),
-				 ('road',test_names1[1]),
-				 ('city',test_names1[2])]
+"""
+test_recordings=[('city', '2011_09_26_drive_0104_sync'),
+                 ('residential', '2011_09_26_drive_0079_sync'),
+                 ('road', '2011_09_26_drive_0070_sync')]
+
 
 if not os.path.exists(DATA_DIR):
 	os.makedirs(DATA_DIR)
@@ -64,8 +66,13 @@ def download_data():
         os.mkdir(base_dir)
     for category in categories:
         url="http://www.cvlibs.net/datasets/kitti/raw_data.php?type="+category
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content)
+        # Adding timeout and exception handling for requests
+        try:
+            response = requests.get(url, timeout=10)
+        except requests.exceptions.Timeout:
+            print(f"Timeout occurred while trying to connect to {url}")
+            continue
+        soup = BeautifulSoup(response.content, features="html.parser")
         
         # h3: the 3rd level header tag in a HTML file
         drive_list_original = soup.find_all('h3')
@@ -74,6 +81,9 @@ def download_data():
         for drive in drive_list_original:
             drive_list.append(drive.text[:drive.text.find(' ')])
         print(category)
+        print("Downloading data to:", base_dir)  # Debugging download path
+        print("Categories:", categories)  # Debugging categories
+        print("URL:", url)  # Debugging URL for each category
         category_dir = base_dir + category + '/'
         if not os.path.exists(category_dir):
             os.makedirs(category_dir)
@@ -90,16 +100,16 @@ def download_data():
 def extract_data():
     for category in categories:
         category_dir = os.path.join(DATA_DIR, 'raw/', category + '/')
-        zip_files = list(os.walk(category_dir, topdown=False))[-1][-1]
+        zip_files = list(os.walk(category_dir, topdown=False))[-1][-1]#.next()
         for file in zip_files:
             print('Extracting '+file)
             
             # get the first 10 characters; f[:-4] remove '.zip'
-            spec_folder = file[:10] + '/' + file[:-4] + '/image_03/data/'
+            spec_folder = file[:10] + '/' + file[:-4] + '/image_03/data*'
             """
             	e.g.:
             		file = '2011_09_26_drive_0005_sync.zip'
-					spec_folder = '2011_09_26/2011_09_26_drive_0005_sync/image_03/data/'
+					spec_folder = '2011_09_26/2011_09_26_drive_0005_sync/image_03/data*'
             """
             
             # use cmd line to unzip
@@ -141,10 +151,14 @@ def process_data():
 			"""
 			image_dir = os.path.join(DATA_DIR, 'raw/', category, folder, folder[:10], folder, 'image_03/data/')
 
-			image_files = list(os.walk(image_dir, topdown=False))[-1][-1]
+			walk_results = list(os.walk(image_dir, topdown=False))
+			if walk_results and walk_results[-1][-1]:
+				image_files = walk_results[-1][-1]
+			else:
+				image_files = []
    
 			# add all image files to list
-			image_list += [image_dir + file for file in image_files]
+			image_list += [image_dir + f for f in sorted(image_files)]
 
 			# add source info for each image, 
    			# e.g. 'city-2011_09_26_drive_0005_sync' will occur len(image_files) times
@@ -172,8 +186,8 @@ def process_data():
 			saved_image_processed[index] = process_image(image, desired_image_size)
 
 		# hlk.dump: save data structure to file
-		hkl.dump(saved_image_processed, os.path.join(DATA_DIR, 'processed_' + split + '.hkl'))
-		hkl.dump(source_list, os.path.join(DATA_DIR, 'source_' + split + '.hkl'))
+		hkl.dump(saved_image_processed, os.path.join(DATA_DIR, 'X_' + split + '.hkl'))
+		hkl.dump(source_list, os.path.join(DATA_DIR, 'sources_' + split + '.hkl'))
 
 
 """VI: resize and crop"""
